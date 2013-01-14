@@ -37,17 +37,18 @@ function menu_suite_install()
 				`id`			int(11)			NOT NULL AUTO_INCREMENT,
 				`title`			varchar(50)		NOT NULL,
 				`link`			varchar(100)	NOT NULL,
+				`sort`			int(11)			NOT NULL DEFAULT '1',
 	PRIMARY KEY (`id`) ) ENGINE=MyISAM {$col}");
 
 	$db->query('INSERT INTO '.TABLE_PREFIX.'ms_acp
-			(title, link)
+			(title, link, sort)
 		VALUES
-			("$lang->add_new_forum",	"index.php?module=forum-management&action=add"),
-			("$lang->search_for_users",	"index.php?module=user-users&action=search"),
-			("$lang->themes",			"index.php?module=style-themes"),
-			("$lang->templates",		"index.php?module=style-templates"),
-			("$lang->plugins",			"index.php?module=config-plugins"),
-			("$lang->database_backups",	"index.php?module=tools-backupdb")
+			("$lang->add_new_forum",	"index.php?module=forum-management&action=add",	1),
+			("$lang->search_for_users",	"index.php?module=user-users&action=search",	2),
+			("$lang->themes",			"index.php?module=style-themes",				3),
+			("$lang->templates",		"index.php?module=style-templates",				4),
+			("$lang->plugins",			"index.php?module=config-plugins",				5),
+			("$lang->database_backups",	"index.php?module=tools-backupdb",				6)
 		');
 }
 
@@ -114,7 +115,7 @@ function ms_quick_access($menu)
 	global $db;
 	$menu = array();
 	
-	$query = $db->simple_select("ms_acp", "*", "", array("order_by" => "title"));
+	$query = $db->simple_select("ms_acp", "*", "", array("order_by" => "sort"));
 	while($link = $db->fetch_array($query)) {
 		$menu[] = array("title" => get_title($link['title']), "link" => $link['link']);
 	}

@@ -25,6 +25,8 @@ $l['ms_delete_confirm'] = "Bist du sicher, dass du diesen Men&uuml; Punkt l&ouml
 $l['ms_deleted'] = "Men&uuml; Punkt gel&ouml;scht";
 $l['ms_edit'] = "Men&uuml; Punkt bearbeiten";
 $l['edit_success'] = "Men&uuml; Punkt erfolgreich bearbeitet";
+$l['order'] = "Sortierung";
+$l['ms_order_new'] = "Sortierung aktualisiert";
 
 //ACP
 $l['ms_acp_title_desc'] = "Was soll als Schnellzugriffname angezeigt werden?";

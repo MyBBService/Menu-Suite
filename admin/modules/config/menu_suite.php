@@ -160,32 +160,48 @@ if($mybb->input['action'] == "acp_edit") {
 	$form->output_submit_wrapper($buttons);
 	$form->end();
 }
+if($mybb->input['action'] == "acp_order") {
+	foreach($mybb->input['disporder'] as $id => $sort) {
+		$id = (int)$id; $sort = (int)$sort;
+		$db->update_query("ms_acp", array("sort"=>$sort), "id='{$id}'");
+	}
+
+	flash_message($lang->ms_order_new, 'success');
+	admin_redirect("index.php?module=config-menu_suite&action=acp");
+}
 if($mybb->input['action'] == "acp") {
 	$page->output_header($lang->ms_acp);
 	generate_tabs("acp");
 
-	$table = new Table;
+	$form = new Form("index.php?module=config-menu_suite&amp;action=acp_order", "post");
+	$form_container = new FormContainer($lang->ms_acp."<span style=\"float: right;\"><a href=\"index.php?module=config-menu_suite&amp;action=acp_add\">{$lang->ms_add}</a></span>");
 
-	$table->construct_header($lang->ms_title);
-	$table->construct_header($lang->ms_url);
-	$table->construct_header($lang->controls, array("class" => "align_center", "colspan" => 2));
+	$form_container->output_row_header($lang->ms_title);
+	$form_container->output_row_header($lang->ms_url);
+	$form_container->output_row_header($lang->order);
+	$form_container->output_row_header($lang->controls, array("class" => "align_center", "colspan" => 2));
 
-	$query = $db->simple_select("ms_acp", "*", "", array("order_by"=>"title"));
+	$query = $db->simple_select("ms_acp", "*", "", array("order_by"=>"sort"));
 	if($db->num_rows($query) > 0)
 	{
 		while($link = $db->fetch_array($query))
 		{
-			$table->construct_cell($link['title']);
-			$table->construct_cell($link['link']);
-			$table->construct_cell("<a href=\"index.php?module=config-menu_suite&amp;action=acp_edit&amp;id={$link['id']}\">{$lang->edit}</a>", array('class' => 'align_center', 'width' => '10%'));
-			$table->construct_cell("<a href=\"index.php?module=config-menu_suite&amp;action=acp_delete&amp;id={$link['id']}\">{$lang->delete}</a>", array('class' => 'align_center', 'width' => '10%'));
-			$table->construct_row();
+			$form_container->output_cell($link['title']);
+			$form_container->output_cell($link['link']);
+			$form_container->output_cell("<input type=\"text\" name=\"disporder[".$link['id']."]\" value=\"".$link['sort']."\" class=\"text_input align_center\" style=\"width: 80%; font-weight: bold;\" />", array('width' => '5%'));
+			$form_container->output_cell("<a href=\"index.php?module=config-menu_suite&amp;action=acp_edit&amp;id={$link['id']}\">{$lang->edit}</a>", array('class' => 'align_center', 'width' => '10%'));
+			$form_container->output_cell("<a href=\"index.php?module=config-menu_suite&amp;action=acp_delete&amp;id={$link['id']}\">{$lang->delete}</a>", array('class' => 'align_center', 'width' => '10%'));
+			$form_container->construct_row();
 		}
 	} else {
-		$table->construct_cell($lang->no_links, array('class' => 'align_center', 'colspan' => 4));
-		$table->construct_row();
+		$form_container->output_cell($lang->no_links, array('class' => 'align_center', 'colspan' => 4));
+		$form_container->construct_row();
 	}
-	$table->output($lang->ms_acp."<span style=\"float: right;\"><a href=\"index.php?module=config-menu_suite&amp;action=acp_add\">{$lang->ms_add}</a></span>");
+	$form_container->end();
+	$buttons[] = $form->generate_submit_button($lang->ms_save);
+	$buttons[] = $form->generate_reset_button($lang->reset);
+	$form->output_submit_wrapper($buttons);
+	$form->end();
 }
 if($mybb->input['action'] == "") {
 	$page->output_header($lang->menu_suite);
