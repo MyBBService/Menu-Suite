@@ -31,4 +31,6 @@ $l['ms_order_new'] = "Sortierung aktualisiert";
 //ACP
 $l['ms_acp_title_desc'] = "Was soll als Schnellzugriffname angezeigt werden?";
 $l['ms_acp_url_desc'] = "Gib hier den Link zu dem Modul an (z.B. \"index.php?module=config-menu_suite\")";
+$l['ms_activated_success'] = "{1} Themes erfolgreich zur Verwendung von Men&uuml; Suite aktualisiert";
+$l['ms_activated_failed'] = "Bei {1} Themes gab es Probleme bei der Aktualisierung f&uuml;r Men&uuml; Suite. Wie du diese manuell importierst erf&auml;hrst du <a href=\"http://google.de\">hier</a>";
 ?>

@@ -8,9 +8,14 @@ $plugins->add_hook("admin_config_menu", "menu_suite_admin_config_menu");
 $plugins->add_hook("admin_config_action_handler", "menu_suite_admin_config_action_handler");
 $plugins->add_hook("admin_config_permissions", "menu_suite_admin_config_permissions");
 
+//Hook für Custom Message
+$plugins->add_hook("admin_config_plugins_activate_commit", "ms_activated");
+
 //Schnellzugriff Funktion
 $plugins->add_hook("admin_home_menu_quick_access", "ms_quick_access");
 
+//Frontend Funktion
+$plugins->add_hook("global_start", "ms_frontend");
 
 function menu_suite_info()
 {
@@ -50,6 +55,20 @@ function menu_suite_install()
 			("$lang->plugins",			"index.php?module=config-plugins",				5),
 			("$lang->database_backups",	"index.php?module=tools-backupdb",				6)
 		');
+	
+	$db->add_column("templatesets", "ms_style", "varchar(200) NOT NULL DEFAULT ''");
+	
+	$db->query("CREATE TABLE `".TABLE_PREFIX."ms_menu` (
+				`id`			int(11)			NOT NULL AUTO_INCREMENT,
+				`name`			varchar(50)		NOT NULL,
+				`link`			varchar(100)	NOT NULL,
+				`img`			varchar(100)	NOT NULL DEFAULT '',
+				`css`			varchar(50)		NOT NULL DEFAULT '',
+				`sid`			varchar(50)		NOT NULL DEFAULT '',
+				`gids`			varchar(50)		NOT NULL DEFAULT '',
+				`sort`			int(11)			NOT NULL DEFAULT '1',
+	PRIMARY KEY (`id`) ) ENGINE=MyISAM {$col}");
+
 }
 
 function menu_suite_is_installed() {
@@ -57,15 +76,68 @@ function menu_suite_is_installed() {
 	return $db->table_exists("ms_acp");
 }
 
-function menu_suite_activate() {}
+function menu_suite_activate() {
+	global $db, $debug;
 
-function menu_suite_deactivate() {}
+	$query = $db->simple_select("templates", "tid, sid, template", "title = 'header'");
+	while($template = $db->fetch_array($query)) {
+		$debug[$template['sid']]['success'] = fix_template($template['sid'], $template, $debug);
+	}
+}
+
+function ms_activated() {
+	global $codename, $debug, $message, $lang;
+
+	if(!$lang->menu_suite)
+	    $lang->load("menu_suite");
+
+	if($codename == "menu_suite") {
+		$success = 0; $failed = 0;
+
+		foreach($debug as $debug_menu) {
+			if($debug_menu['success'])
+			    $success++;
+			else
+				$failed++;
+		}
+		
+		if($success > 0) {
+			$message .= "<br />".$lang->sprintf($lang->ms_activated_success, $success);
+		}
+
+		if($failed > 0) {
+			$message .= "<br />".$lang->sprintf($lang->ms_activated_failed, $failed);
+		}
+	}
+}
+
+function tprint(&$item, $key) {
+	if(!is_array($item)) {
+		$item = htmlentities(trim($item));
+	} else {
+		array_walk($item, "tprint");
+	}
+}
+
+function menu_suite_deactivate() {
+	global $db;
+
+	$query = $db->simple_select("templates", "tid, sid, template", "title = 'header'");
+	while($template = $db->fetch_array($query)) {
+		$menu_suite = generate_menu($template['sid'], "", false, false);
+		$new_template = str_replace('{$menu_suite}', $menu_suite, $template['template']);
+		$db->update_query("templatesets", array("ms_style" => ""), "sid='{$template['sid']}'");
+		$db->update_query("templates", array("template" => $db->escape_string($new_template)), "tid='{$template['tid']}'");
+	}
+}
 
 function menu_suite_uninstall()
 {
 	global $db;
 	
 	$db->drop_table("ms_acp");
+	$db->drop_column("templatesets", "ms_style");
+	$db->drop_table("ms_menu");
 }
 
 function menu_suite_admin_config_menu($sub_menu)
@@ -102,7 +174,11 @@ function menu_suite_admin_config_permissions($admin_permissions)
 
 function get_title($title)
 {
-	if(strpos($title, "$") == 0 && substr($title, 0, 7) == '$lang->') {
+	$start = 0;
+	if(substr($title, 0, 1) == "{")
+	    $start = 1;
+
+	if(strpos($title, "$") == $start && substr($title, $start, 7) == '$lang->') {
 	    //Sprachvariable
 		global $lang;
 		eval ("\$title = \"$title\";");
@@ -121,4 +197,291 @@ function ms_quick_access($menu)
 	}
 	return $menu;
 }
+
+function ms_frontend()
+{
+	global $mybb, $db, $current_page, $menu_suite, $theme;
+
+	$loadstyle = '';
+	$load_from_forum = 0;
+	$style = array();
+
+	if(isset($mybb->user['style']) && intval($mybb->user['style']) != 0)
+	{
+		$loadstyle = "tid='".$mybb->user['style']."'";
+	}
+
+	$valid = array(
+		"showthread.php", 
+		"forumdisplay.php",
+		"newthread.php",
+		"newreply.php",
+		"ratethread.php",
+		"editpost.php",
+		"polls.php",
+		"sendthread.php",
+		"printthread.php",
+		"moderation.php"
+	);
+
+	if(in_array($current_page, $valid))
+	{
+		cache_forums();
+
+		if($mybb->input['pid'])
+		{
+			$query = $db->simple_select("posts", "fid", "pid = '".intval($mybb->input['pid'])."'", array("limit" => 1));
+			$fid = $db->fetch_field($query, "fid");
+
+			if($fid)
+			{
+				$style = $forum_cache[$fid];
+				$load_from_forum = 1;
+			}
+		}
+		else if($mybb->input['tid'])
+		{
+			$query = $db->simple_select("threads", "fid", "tid = '".intval($mybb->input['tid'])."'", array("limit" => 1));
+			$fid = $db->fetch_field($query, "fid");
+
+			if($fid)
+			{
+				$style = $forum_cache[$fid];
+				$load_from_forum = 1;
+			}
+		}
+		else if($mybb->input['fid'])
+		{
+			$style = $forum_cache[intval($mybb->input['fid'])];
+			$load_from_forum = 1;
+		}
+	}
+	unset($valid);
+
+	if(isset($style['style']) && $style['style'] > 0)
+	{
+		if($style['overridestyle'] == 1 || !isset($mybb->user['style']))
+		{
+			$loadstyle = "tid='".intval($style['style'])."'";
+		}
+	}
+
+	if(empty($loadstyle))
+	{
+		$loadstyle = "def='1'";
+	}
+
+	$query = $db->simple_select("themes", "properties", $loadstyle, array('limit' => 1));
+	$theme = unserialize($db->fetch_field($query, "properties"));
+
+	if(!$theme)
+	{
+		$query = $db->simple_select("themes", "properties", "", array("order_by" => "tid", "limit" => 1));
+		$theme = unserialize($db->fetch_field($query, "properties"));
+	}
+	
+	$menu_suite = generate_menu($theme['templateset']);
+	unset($theme);
+}
+
+function fix_template($sid, $template = array(), &$debug = array()) {
+	global $db;
+	
+	if(empty($template)) {
+		$query = $db->simple_select("templates", "tid, sid, template", "title = 'header' AND sid = '".$sid."'");
+		$template = $db->fetch_array($query);
+	}
+	
+	//Let's search our Menu
+	$debug[$sid]['menu_type'] = "class";
+	$start = strpos($template['template'], "<div class=\"menu\">");
+	$end = strpos($template['template'], "</div>", $start);
+	if($start === false || $end === false) {
+		//Probably we don't have a class but an id?
+		$debug[$sid]['menu_type'] = "id";
+		$start = strpos($template['template'], "<div id=\"menu\">");
+		$end = strpos($template['template'], "</div>", $start);
+		if($start === false || $end === false) {
+			$debug[$sid]['status'] = "Menu not found";
+			return false;
+		}
+	}
+	
+	$menu = substr($template['template'], $start, $end-$start);
+	if($menu == "") {
+		$debug[$sid]['status'] = "Menu empty";
+		return false;		
+	}
+	
+	$menus = explode("\n", $menu);
+	$debug[$sid]['menu'] = array();
+	foreach($menus as $menup) {
+		//Let's do the hard work - fetching the style of the menu
+		preg_match('#href="(.*?)"#i', $menup, $test);
+		$info['link'] = $test[1];
+		$style = preg_replace("#href=\"(.*?)\"#i", "href={link}", $menup);
+		preg_match("#src=\"(.*?)\"#i", $style, $test);
+		$info['img'] = $test[1];
+		$style = preg_replace("#src=\"(.*?)\"#i", "src={img}", $style);
+		preg_match("#class=\"(.*?)\"#i", $style, $test);
+		$info['css'] = $test[1];
+		$style = preg_replace("#class=\"(.*?)\"#i", "class={css}", $style);
+		$info['name'] = trim(strip_tags($menup));
+		$style = str_replace($info['name'], "{name}", $style);
+
+		if(!empty($info) && $info['name'] != "" && $info['link'] != "")
+			$debug[$sid]['menu'][] = $info;
+
+		if(isset($styles[$style]))
+		    $styles[$style]++;
+		else
+			$styles[$style] = 1;
+			
+	}
+
+	//echo "<pre>"; var_dump($debug[$sid]['menu']); echo "</pre>"	;
+	if(empty($debug[$sid]['menu'])) {
+		$debug[$sid]['status'] = "Menu not fetched";
+		//return false;		
+	}
+	
+	//Let's select which style we need
+	natsort($styles);
+	$styles = array_reverse($styles);
+		
+	$styles = array_keys($styles);
+	$style = $styles[0];
+	
+	$debug[$sid]['style'] = $style;
+		
+	//Generate the whole menu
+	//Generate first menu point
+	$first = generate_menu_point($sid, $debug[$sid]['menu'][0], $debug[$sid]['style'], false);
+	$first = strpos($template['template'], $first);
+	
+	$menup = end($debug[$sid]['menu']);
+	$last = generate_menu_point($sid, $menup, $debug[$sid]['style'], false);
+	$last = strpos($template['template'], $last) + strlen($last);
+	
+	if($first === false || $last === false) {
+		$debug[$sid]['status'] = "Menu style not right";
+		return false;
+	}
+	
+	$start = substr($template['template'], 0, $first);
+	$end = substr($template['template'], $last);
+
+	$new_template = $start."{\$menu_suite}".$end;
+	
+	$debug[$sid]['template'] = $new_template;
+	
+	//echo htmlentities($debug[$sid]['template']); exit();
+	
+	//Now insert everything...
+	//First the style
+	$db->update_query("templatesets", array("ms_style" => $db->escape_string($debug[$sid]['style'])), "sid='{$sid}'");
+	//Then update the template
+	$db->update_query("templates", array("template" => $db->escape_string($debug[$sid]['template'])), "sid='{$sid}' AND title='header'");
+	//Add the menu points to our very nice database
+	add_menu_points($sid, $debug[$sid]['menu']);
+	
+	return true;
+}
+
+function add_menu_points($sid, $menu) {
+	global $db, $cache;
+	
+	$groups = $cache->read("usergroups");
+	foreach($groups as $group) {
+		$gids[] = $group['gid'];
+	}
+	$max_groups = implode(",", $gids);
+	
+	foreach($menu as $menup) {
+		//First check whether we have this point already
+		$whether = array(
+			"link='".$db->escape_string($menup['link'])."'",
+			"name='".$db->escape_string($menup['name'])."'",
+			"img='".$db->escape_string($menup['img'])."'",
+			"css='".$db->escape_string($menup['css'])."'"
+		);
+		$whether = implode(" AND ", $whether);
+		$whether .= " AND (gids='' OR gids='{$max_groups}')";
+		
+		$query = $db->simple_select("ms_menu", "id, sid", $whether);
+		if($db->num_rows($query) == 1) {
+			$smenu = $db->fetch_array($query);
+			$smenu['sid'] .= ",{$sid}";
+			$db->update_query("ms_menu", array("sid" => $smenu['sid']), "id='{$smenu['id']}'");
+		} else {
+			$menu = array(
+				"sid" => (int)$sid,
+				"link" => $db->escape_string($menup['link']),
+				"name" => $db->escape_string($menup['name']),
+				"img" => $db->escape_string($menup['img']),
+				"css" => $db->escape_string($menup['css'])
+			);
+			$db->insert_query("ms_menu", $menu);
+		}
+	}
+}
+
+function generate_menu($sid, $style = "", $use_groups = true, $eval = true) {
+	global $db, $mybb;
+	
+	if($style == "") {
+		$query = $db->simple_select("templatesets", "ms_style", "sid='{$sid}'");
+		$style = $db->fetch_field($query, "ms_style");
+	}
+
+	$menu = "";
+	$query = $db->simple_select("ms_menu");
+	while($menus = $db->fetch_array($query)) {
+		//First check if it's in our SID
+		if($menus['sid'] != "" && !in_array($sid, explode(",",$menus['sid'])))
+		    continue;
+		
+		//Let's check the group
+		if($use_groups && $menus['gids'] != "") {
+			$groups = explode(",", $menus['gids']);
+		
+		    $memberships = explode(',', $mybb->user['additionalgroups']);
+		    $memberships[] = $mybb->user['usergroup'];
+		
+			if(sizeof(array_intersect($groups, $memberships)) == 0)
+				continue;
+		}
+		
+		//Ok let's add this Menu Point
+		
+		$menu .= "\n".generate_menu_point($sid, $menus, $style, $eval);
+	}
+	
+	return $menu;
+}
+
+function generate_menu_point($sid, $menu, $style = "", $eval = true) {
+	global $db, $mybb, $lang, $theme;
+	
+	if($style == "") {
+		$query = $db->simple_select("templatesets", "ms_style", "sid='{$sid}'");
+		$style = $db->fetch_field($query, "ms_style");
+	}
+		
+	if($eval)
+	    $menu['name'] = get_title($menu['name']);
+	
+	$point = str_replace("{link}", "\"{$menu['link']}\"", $style);
+	$point = str_replace("{img}", "\"{$menu['img']}\"", $point);
+	$point = str_replace("{css}", "\"{$menu['css']}\"", $point);
+	$point = str_replace("{name}", $menu['name'], $point);
+	
+	if($eval) {
+		$point = str_replace("\\'", "'", addslashes($point));
+		eval ("\$point = \"$point\";");
+	}
+
+	return $point;
+}
+
 ?>
