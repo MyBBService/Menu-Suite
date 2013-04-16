@@ -17,6 +17,9 @@ $plugins->add_hook("admin_home_menu_quick_access", "ms_quick_access");
 //Frontend Funktion
 $plugins->add_hook("global_start", "ms_frontend");
 
+//Import Funktion
+$plugins->add_hook("admin_style_themes_import_commit", "ms_import");
+
 function menu_suite_info()
 {
 	return array(
@@ -282,6 +285,25 @@ function ms_frontend()
 	
 	$menu_suite = generate_menu($theme['templateset']);
 	unset($theme);
+}
+
+function ms_import()
+{
+	global $theme_id;
+
+	$query = $db->simple_select("themes", "properties", "tid='{$theme_id}'");
+	$theme = unserialize($db->fetch_field($query, "properties"));
+
+	$success = fix_template($template['sid']);
+	
+	log_admin_action($theme_id);
+
+	if($success)
+		flash_message($lang->success_imported_theme."<br />".$lang->ms_import_success, 'success');
+	else
+		flash_message($lang->success_imported_theme."<br />".$lang->ms_import_failed, 'success');
+	
+	admin_redirect("index.php?module=style-themes&action=edit&tid=".$theme_id);
 }
 
 function fix_template($sid, $template = array(), &$debug = array()) {
