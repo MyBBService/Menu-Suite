@@ -435,7 +435,7 @@ function generate_menu($sid, $style = "", $use_groups = true, $eval = true) {
 	}
 
 	$menu = "";
-	$query = $db->simple_select("ms_menu");
+	$query = $db->simple_select("ms_menu", "*", "", array("order_by"=>"sort"));
 	while($menus = $db->fetch_array($query)) {
 		//First check if it's in our SID
 		if($menus['sid'] != "" && !in_array($sid, explode(",",$menus['sid'])))
