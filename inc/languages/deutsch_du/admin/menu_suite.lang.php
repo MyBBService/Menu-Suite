@@ -8,6 +8,8 @@ $l['menu_suite_wrong_id'] = "Die übermittelte ID scheint nicht eindeutig zu sei
 //Menu
 $l['ms_toplinks'] = "Toplinks";
 $l['ms_toplinks_desc'] = "Hier kannst du deine Toplinks (\"Suche\", \"Mitglieder\", etc) anpassen";
+$l['ms_styles'] = "Styles";
+$l['ms_styles_desc'] = "Hier kannst du die Styles der verschiedenen Designs einstellen";
 $l['ms_acp'] = "Schnellzugriff (ACP)";
 $l['ms_acp_desc'] = "Hier kannst du die Links im Schnellzugriff auf der ACP Startseite anpassen";
 
@@ -27,6 +29,25 @@ $l['ms_edit'] = "Men&uuml; Punkt bearbeiten";
 $l['edit_success'] = "Men&uuml; Punkt erfolgreich bearbeitet";
 $l['order'] = "Sortierung";
 $l['ms_order_new'] = "Sortierung aktualisiert";
+
+//Toplinks
+$l['ms_title_desc'] = "Was soll als Men&uuml; Name angezeigt werden?";
+$l['ms_link_desc'] = "Gib hier den Namen zu der neuen Seite an";
+$l['ms_img'] = "Bild";
+$l['ms_img_desc'] = "Gib hier den Pfad zu einem Bild ein";
+$l['ms_css'] = "CSS Klassen";
+$l['ms_css_desc'] = "Gib hier weitere Klassen an";
+$l['ms_sid'] = "Designs";
+$l['ms_sid_desc'] = "W&auml;hle hier die Designs unter denen dieser Men&uuml;punkt angezeigt werden soll<br />Wenn keines ausgew&auml;hlt ist wird der Punkt f&uuml;r alle angezeigt";
+$l['ms_gid'] = "Gruppen";
+$l['ms_gid_desc'] = "W&auml;hle hier die Gruppen, denen dieser Men&uuml;punkt angezeigt werden soll<br />Wenn keine ausgew&auml;hlt ist wird der Punkt allen angezeigt";
+
+//Styles
+$l['theme'] = "Theme";
+$l['style'] = "Style";
+$l['ms_edit_style'] = "Style bearbeiten";
+$l['ms_style_desc'] = "Wie sollen die Men&uuml;punkte generiert werden (HTML)?<br />Folgende Variablen sind m&ouml;glich:<br />{link}->Der Link des Punktes<br />{img}->Das Bild des Punktes<br />{css}->weitere CSS Klassen des Punktes<br />{name}->Der eigentliche Men&uuml;punkt";
+$l['missing_style'] = "Bitte gib einen Style ein";
 
 //ACP
 $l['ms_acp_title_desc'] = "Was soll als Schnellzugriffname angezeigt werden?";
