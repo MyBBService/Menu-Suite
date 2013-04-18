@@ -82,9 +82,39 @@ function menu_suite_is_installed() {
 function menu_suite_activate() {
 	global $db, $debug;
 
-	$query = $db->simple_select("templates", "tid, sid, template", "title = 'header'");
+	$fixed = array(-2);
+
+	//First fix all Templates that need to be (global, already changed)
+	$query = $db->simple_select("templates", "tid, sid, template", "title = 'header' AND sid > -2");
 	while($template = $db->fetch_array($query)) {
 		$debug[$template['sid']]['success'] = fix_template($template['sid'], $template, $debug);
+		$fixed[] = $template['sid'];
+	}
+	
+	//Now add new Templates if needed
+	$query = $db->simple_select("templates", "tid, template", "title = 'header' AND sid='-2'");
+	$master_template = $db->fetch_array($query);
+	$return = fix_raw_template($master_template['template'], $ldebug, true);
+	if($return['success'] && $return['template'] != $master_template['template']) {
+		$query = $db->simple_select("templatesets", "sid", "sid NOT IN (".implode(',', $fixed).")");
+		while($template = $db->fetch_array($query)) {
+			$insert = array(
+				"title" => "header",
+				"template" => $db->escape_string($return['template']),
+				"sid" => $template['sid'],
+				"version" => $mybb->version_code,
+				"status" => '',
+				"dateline" => TIME_NOW
+			);
+			$db->insert_query("templates", $insert);
+			
+			$db->update_query("templatesets", array("ms_style" => $db->escape_string($ldebug['style'])), "sid='{$template['sid']}'");
+			add_menu_points($template['sid'], $ldebug['menu']);
+
+			$debug[$template['sid']] = $ldebug;
+			$debug[$template['sid']]['success'] = true;
+			$debug[$template['sid']]['added'] = true;
+		}
 	}
 }
 
@@ -314,29 +344,48 @@ function fix_template($sid, $template = array(), &$debug = array()) {
 		$template = $db->fetch_array($query);
 	}
 	
+	$return = fix_raw_template($template['template'], $debug[$sid]);
+	
+	if(!$return['success'])
+	    return false;
+	
+	//echo htmlentities($debug[$sid]['template']); exit();
+	
+	//Now insert everything...
+	//First the style
+	$db->update_query("templatesets", array("ms_style" => $db->escape_string($debug[$sid]['style'])), "sid='{$sid}'");
+	//Then update the template
+	$db->update_query("templates", array("template" => $db->escape_string($debug[$sid]['template'])), "sid='{$sid}' AND title='header'");
+	//Add the menu points to our very nice database
+	add_menu_points($sid, $debug[$sid]['menu']);
+	
+	return true;
+}
+
+function fix_raw_template($template, &$debug=array()) {
 	//Let's search our Menu
-	$debug[$sid]['menu_type'] = "class";
-	$start = strpos($template['template'], "<div class=\"menu\">");
-	$end = strpos($template['template'], "</div>", $start);
+	$debug['menu_type'] = "class";
+	$start = strpos($template, "<div class=\"menu\">");
+	$end = strpos($template, "</div>", $start);
 	if($start === false || $end === false) {
 		//Probably we don't have a class but an id?
-		$debug[$sid]['menu_type'] = "id";
-		$start = strpos($template['template'], "<div id=\"menu\">");
-		$end = strpos($template['template'], "</div>", $start);
+		$debug['menu_type'] = "id";
+		$start = strpos($template, "<div id=\"menu\">");
+		$end = strpos($template, "</div>", $start);
 		if($start === false || $end === false) {
-			$debug[$sid]['status'] = "Menu not found";
-			return false;
+			$debug['status'] = "Menu not found";
+			return array("success"=>"false");
 		}
 	}
-	
-	$menu = substr($template['template'], $start, $end-$start);
+
+	$menu = substr($template, $start, $end-$start);
 	if($menu == "") {
-		$debug[$sid]['status'] = "Menu empty";
-		return false;		
+		$debug['status'] = "Menu empty";
+		return array("success"=>"false");
 	}
-	
+
 	$menus = explode("\n", $menu);
-	$debug[$sid]['menu'] = array();
+	$debug['menu'] = array();
 	foreach($menus as $menup) {
 		//Let's do the hard work - fetching the style of the menu
 		preg_match('#href="(.*?)"#i', $menup, $test);
@@ -352,62 +401,52 @@ function fix_template($sid, $template = array(), &$debug = array()) {
 		$style = str_replace($info['name'], "{name}", $style);
 
 		if(!empty($info) && $info['name'] != "" && $info['link'] != "")
-			$debug[$sid]['menu'][] = $info;
+			$debug['menu'][] = $info;
 
 		if(isset($styles[$style]))
 		    $styles[$style]++;
 		else
 			$styles[$style] = 1;
-			
+
 	}
 
-	//echo "<pre>"; var_dump($debug[$sid]['menu']); echo "</pre>"	;
-	if(empty($debug[$sid]['menu'])) {
-		$debug[$sid]['status'] = "Menu not fetched";
-		//return false;		
+	//echo "<pre>"; var_dump($debug['menu']); echo "</pre>"	;
+	if(empty($debug['menu'])) {
+		$debug['status'] = "Menu not fetched";
+		return array("success"=>"false");
 	}
-	
+
 	//Let's select which style we need
 	natsort($styles);
 	$styles = array_reverse($styles);
-		
+
 	$styles = array_keys($styles);
 	$style = $styles[0];
-	
-	$debug[$sid]['style'] = $style;
-		
+
+	$debug['style'] = $style;
+
 	//Generate the whole menu
 	//Generate first menu point
-	$first = generate_menu_point($sid, $debug[$sid]['menu'][0], $debug[$sid]['style'], false);
-	$first = strpos($template['template'], $first);
-	
-	$menup = end($debug[$sid]['menu']);
-	$last = generate_menu_point($sid, $menup, $debug[$sid]['style'], false);
-	$last = strpos($template['template'], $last) + strlen($last);
-	
+	$first = generate_menu_point(0, $debug['menu'][0], $debug['style'], false);
+	$first = strpos($template, $first);
+
+	$menup = end($debug['menu']);
+	$last = generate_menu_point(0, $menup, $debug['style'], false);
+	$last = strpos($template, $last) + strlen($last);
+
 	if($first === false || $last === false) {
-		$debug[$sid]['status'] = "Menu style not right";
-		return false;
+		$debug['status'] = "Menu style not right";
+		return array("success"=>"false");
 	}
-	
-	$start = substr($template['template'], 0, $first);
-	$end = substr($template['template'], $last);
+
+	$start = substr($template, 0, $first);
+	$end = substr($template, $last);
 
 	$new_template = $start."{\$menu_suite}".$end;
-	
-	$debug[$sid]['template'] = $new_template;
-	
-	//echo htmlentities($debug[$sid]['template']); exit();
-	
-	//Now insert everything...
-	//First the style
-	$db->update_query("templatesets", array("ms_style" => $db->escape_string($debug[$sid]['style'])), "sid='{$sid}'");
-	//Then update the template
-	$db->update_query("templates", array("template" => $db->escape_string($debug[$sid]['template'])), "sid='{$sid}' AND title='header'");
-	//Add the menu points to our very nice database
-	add_menu_points($sid, $debug[$sid]['menu']);
-	
-	return true;
+
+	$debug['template'] = $new_template;	
+
+	return array("success"=>"true", "template" => $new_template);
 }
 
 function add_menu_points($sid, $menu) {
