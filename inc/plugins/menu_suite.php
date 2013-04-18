@@ -319,12 +319,12 @@ function ms_frontend()
 
 function ms_import()
 {
-	global $theme_id;
+	global $theme_id, $db, $lang;
 
 	$query = $db->simple_select("themes", "properties", "tid='{$theme_id}'");
 	$theme = unserialize($db->fetch_field($query, "properties"));
 
-	$success = fix_template($template['sid']);
+	$success = fix_template($theme['templateset']);
 	
 	log_admin_action($theme_id);
 
