@@ -38,9 +38,9 @@ $l['ms_img_desc'] = "Gib hier den Pfad zu einem Bild ein";
 $l['ms_css'] = "CSS Klassen";
 $l['ms_css_desc'] = "Gib hier weitere Klassen an";
 $l['ms_sid'] = "Designs";
-$l['ms_sid_desc'] = "Wäier die Designs unter denen dieser Menüpunkt angezeigt werden soll<br />Wenn keines ausgewäst wird der Punkt für alle angezeigt";
+$l['ms_sid_desc'] = "Wähle die Designs unter denen dieser Menüpunkt angezeigt werden soll<br />Wenn keines ausgewäst wird der Punkt für alle angezeigt";
 $l['ms_gid'] = "Gruppen";
-$l['ms_gid_desc'] = "Wäier die Gruppen, denen dieser Menüpunkt angezeigt werden soll<br />Wenn keine ausgewäst wird der Punkt allen angezeigt";
+$l['ms_gid_desc'] = "Wähle die Gruppen, denen dieser Menüpunkt angezeigt werden soll<br />Wenn keine ausgewäst wird der Punkt allen angezeigt";
 
 //Styles
 $l['theme'] = "Theme";
