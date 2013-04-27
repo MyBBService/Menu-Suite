@@ -53,9 +53,9 @@ $l['missing_style'] = "Bitte gib einen Style ein";
 $l['ms_acp_title_desc'] = "Was soll als Schnellzugriffname angezeigt werden?";
 $l['ms_acp_url_desc'] = "Gib hier den Link zu dem Modul an (z.B. \"index.php?module=config-menu_suite\")";
 $l['ms_activated_success'] = "{1} Themes erfolgreich zur Verwendung von Menü Suite aktualisiert";
-$l['ms_activated_failed'] = "Bei {1} Themes gab es Probleme bei der Aktualisierung für Menü Suite. Wie du diese manuell importierst erfärst du <a href=\"http://mybbservice.de/Beitrag-Menü-Suite-Design-hinzufügen\">hier</a>";
+$l['ms_activated_failed'] = "Bei {1} Themes gab es Probleme bei der Aktualisierung für Menü Suite. Wie du diese manuell importierst erfährst du <a href=\"http://mybbservice.de/Beitrag-Menü-Suite-Design-hinzufügen\">hier</a>";
 
 //Import
 $l['ms_import_success'] = "Theme erfolgreich zur Verwendung von Menü Suite aktualisiert";
-$l['ms_import_failed'] = "Bei dem Theme gab es Probleme bei der Aktualisierung für Menü Suite. Wie du diese manuell importierst erfärst du <a href=\"http://mybbservice.de/Beitrag-Menü-Suite-Design-hinzufügen\">hier</a>";
+$l['ms_import_failed'] = "Bei dem Theme gab es Probleme bei der Aktualisierung für Menü Suite. Wie du diese manuell importierst erfährst du <a href=\"http://mybbservice.de/Beitrag-Menü-Suite-Design-hinzufügen\">hier</a>";
 ?>
