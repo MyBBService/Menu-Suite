@@ -5,13 +5,18 @@ if(!defined("IN_MYBB"))
 	exit;
 }
 
-$page->add_breadcrumb_item($lang->menu_suite, "index.php?module=config-menu_suite");
+if(function_exists("mybbservice_info"))
+    define(MODULE, "mybbservice-menu_suite");
+else
+    define(MODULE, "config-menu_suite");
+
+$page->add_breadcrumb_item($lang->menu_suite, "index.php?module=".MODULE);
 
 if($mybb->input['action'] == "acp_do_add") {
 	if(!verify_post_check($mybb->input['my_post_key']))
 	{
 		flash_message($lang->invalid_post_verify_key2, 'error');
-		admin_redirect("index.php?module=config-menu_suite&action=acp_add");
+		admin_redirect("index.php?module=".MODULE."&action=acp_add");
 	}
 
 	if(!strlen(trim($mybb->input['title'])))
@@ -28,13 +33,13 @@ if($mybb->input['action'] == "acp_do_add") {
 		$db->insert_query("ms_acp", $insert);
 
 		flash_message($lang->add_success, 'success');
-		admin_redirect("index.php?module=config-menu_suite&action=acp");
+		admin_redirect("index.php?module=".MODULE."&action=acp");
 	} else {
 		$mybb->input['action'] = "acp_add";
 	}
 }
 if($mybb->input['action'] == "acp_add") {
-	$page->add_breadcrumb_item($lang->ms_add, "index.php?module=config-menu_suite&action=acp_add");
+	$page->add_breadcrumb_item($lang->ms_add, "index.php?module=".MODULE."&action=acp_add");
 	$page->output_header($lang->ms_add);
 	generate_tabs("acp");
 
@@ -47,7 +52,7 @@ if($mybb->input['action'] == "acp_add") {
 		$url = "";
 	}
 
-	$form = new Form("index.php?module=config-menu_suite&amp;action=acp_do_add", "post");
+	$form = new Form("index.php?module=".MODULE."&amp;action=acp_do_add", "post");
 	$form_container = new FormContainer($lang->ms_add);
 
 	$add_title = $form->generate_text_box("title", $title);
@@ -67,33 +72,33 @@ if($mybb->input['action']=="acp_delete") {
 	if(!strlen(trim($mybb->input['id'])))
 	{
 		flash_message($lang->menu_suite_no_id, 'error');
-		admin_redirect("index.php?module=config-menu_suite&action=acp");
+		admin_redirect("index.php?module=".MODULE."&action=acp");
 	}
 	$id=(int)$mybb->input['id'];
 
 	if($mybb->input['no'])
-		admin_redirect("index.php?module=config-menu_suite&action=acp");
+		admin_redirect("index.php?module=".MODULE."&action=acp");
 	else {
 		if($mybb->request_method == "post") {
 			$db->delete_query("ms_acp", "id='{$id}'");
 			flash_message($lang->ms_deleted, 'success');
-			admin_redirect("index.php?module=config-menu_suite&action=acp");
+			admin_redirect("index.php?module=".MODULE."&action=acp");
 		} else
-			$page->output_confirm_action("index.php?module=config-menu_suite&action=acp_delete&id={$id}", $lang->ms_delete_confirm);
+			$page->output_confirm_action("index.php?module=".MODULE."&action=acp_delete&id={$id}", $lang->ms_delete_confirm);
 	}
 }
 if($mybb->input['action'] == "acp_do_edit") {
 	if(!strlen(trim($mybb->input['id'])))
 	{
 		flash_message($lang->menu_suite_no_id, 'error');
-		admin_redirect("index.php?module=config-menu_suite&action=acp");
+		admin_redirect("index.php?module=".MODULE."&action=acp");
 	}
 	$id=(int)$mybb->input['id'];
 
     if(!verify_post_check($mybb->input['my_post_key']))
 	{
 		flash_message($lang->invalid_post_verify_key2, 'error');
-		admin_redirect("index.php?module=config-menu_suite&action=acp");
+		admin_redirect("index.php?module=".MODULE."&action=acp");
 	}
 
 	if(!strlen(trim($mybb->input['title'])))
@@ -110,7 +115,7 @@ if($mybb->input['action'] == "acp_do_edit") {
 		$db->update_query("ms_acp", $update, "id={$id}");
 
 		flash_message($lang->edit_success, 'success');
-		admin_redirect("index.php?module=config-menu_suite&action=acp");
+		admin_redirect("index.php?module=".MODULE."&action=acp");
 	} else {
 		$mybb->input['action'] = "acp_edit";
 	}
@@ -119,18 +124,18 @@ if($mybb->input['action'] == "acp_edit") {
 	if(!strlen(trim($mybb->input['id'])))
 	{
 		flash_message($lang->menu_suite_no_id, 'error');
-		admin_redirect("index.php?module=config-menu_suite&action=acp");
+		admin_redirect("index.php?module=".MODULE."&action=acp");
 	}
 	$id=(int)$mybb->input['id'];
 	$query = $db->simple_select("ms_acp", "*", "id='{$id}'");
 	if($db->num_rows($query) != 1)
 	{
 		flash_message($lang->menu_suite_wrong_id, 'error');
-		admin_redirect("index.php?module=config-menu_suite&action=acp");
+		admin_redirect("index.php?module=".MODULE."&action=acp");
 	}
 	$point = $db->fetch_array($query);
 
-	$page->add_breadcrumb_item($lang->ms_edit, "index.php?module=config-menu_suite&action=acp_edit&id={$id}");
+	$page->add_breadcrumb_item($lang->ms_edit, "index.php?module=".MODULE."&action=acp_edit&id={$id}");
 	$page->output_header($lang->ms_edit);
 	generate_tabs("acp");
 
@@ -143,7 +148,7 @@ if($mybb->input['action'] == "acp_edit") {
 		$url = $point['link'];
 	}
 
-	$form = new Form("index.php?module=config-menu_suite&amp;action=acp_do_edit", "post");
+	$form = new Form("index.php?module=".MODULE."&amp;action=acp_do_edit", "post");
 	$form_container = new FormContainer($lang->ms_edit);
 
 	$add_title = $form->generate_text_box("title", $title);
@@ -167,14 +172,14 @@ if($mybb->input['action'] == "acp_order") {
 	}
 
 	flash_message($lang->ms_order_new, 'success');
-	admin_redirect("index.php?module=config-menu_suite&action=acp");
+	admin_redirect("index.php?module=".MODULE."&action=acp");
 }
 if($mybb->input['action'] == "acp") {
 	$page->output_header($lang->ms_acp);
 	generate_tabs("acp");
 
-	$form = new Form("index.php?module=config-menu_suite&amp;action=acp_order", "post");
-	$form_container = new FormContainer($lang->ms_acp."<span style=\"float: right;\"><a href=\"index.php?module=config-menu_suite&amp;action=acp_add\">{$lang->ms_add}</a></span>");
+	$form = new Form("index.php?module=".MODULE."&amp;action=acp_order", "post");
+	$form_container = new FormContainer($lang->ms_acp."<span style=\"float: right;\"><a href=\"index.php?module=".MODULE."&amp;action=acp_add\">{$lang->ms_add}</a></span>");
 
 	$form_container->output_row_header($lang->ms_title);
 	$form_container->output_row_header($lang->ms_url);
@@ -189,8 +194,8 @@ if($mybb->input['action'] == "acp") {
 			$form_container->output_cell($link['title']);
 			$form_container->output_cell($link['link']);
 			$form_container->output_cell("<input type=\"text\" name=\"disporder[".$link['id']."]\" value=\"".$link['sort']."\" class=\"text_input align_center\" style=\"width: 80%; font-weight: bold;\" />", array('width' => '5%'));
-			$form_container->output_cell("<a href=\"index.php?module=config-menu_suite&amp;action=acp_edit&amp;id={$link['id']}\">{$lang->edit}</a>", array('class' => 'align_center', 'width' => '10%'));
-			$form_container->output_cell("<a href=\"index.php?module=config-menu_suite&amp;action=acp_delete&amp;id={$link['id']}\">{$lang->delete}</a>", array('class' => 'align_center', 'width' => '10%'));
+			$form_container->output_cell("<a href=\"index.php?module=".MODULE."&amp;action=acp_edit&amp;id={$link['id']}\">{$lang->edit}</a>", array('class' => 'align_center', 'width' => '10%'));
+			$form_container->output_cell("<a href=\"index.php?module=".MODULE."&amp;action=acp_delete&amp;id={$link['id']}\">{$lang->delete}</a>", array('class' => 'align_center', 'width' => '10%'));
 			$form_container->construct_row();
 		}
 	} else {
@@ -207,14 +212,14 @@ if($mybb->input['action'] == "style_do_edit") {
 	if(!strlen(trim($mybb->input['id'])))
 	{
 		flash_message($lang->menu_suite_no_id, 'error');
-		admin_redirect("index.php?module=config-menu_suite&action=style");
+		admin_redirect("index.php?module=".MODULE."&action=style");
 	}
 	$id=(int)$mybb->input['id'];
 
     if(!verify_post_check($mybb->input['my_post_key']))
 	{
 		flash_message($lang->invalid_post_verify_key2, 'error');
-		admin_redirect("index.php?module=config-menu_suite&action=style");
+		admin_redirect("index.php?module=".MODULE."&action=style");
 	}
 
 	if(!strlen(trim($mybb->input['style'])))
@@ -227,7 +232,7 @@ if($mybb->input['action'] == "style_do_edit") {
 		$db->update_query("templatesets", $update, "sid={$id}");
 
 		flash_message($lang->edit_success, 'success');
-		admin_redirect("index.php?module=config-menu_suite&action=style");
+		admin_redirect("index.php?module=".MODULE."&action=style");
 	} else {
 		$mybb->input['action'] = "style_edit";
 	}
@@ -236,18 +241,18 @@ if($mybb->input['action'] == "style_edit") {
 	if(!strlen(trim($mybb->input['id'])))
 	{
 		flash_message($lang->menu_suite_no_id, 'error');
-		admin_redirect("index.php?module=config-menu_suite&action=style");
+		admin_redirect("index.php?module=".MODULE."&action=style");
 	}
 	$id=(int)$mybb->input['id'];
 	$query = $db->simple_select("templatesets", "*", "sid='{$id}'");
 	if($db->num_rows($query) != 1)
 	{
 		flash_message($lang->menu_suite_wrong_id, 'error');
-		admin_redirect("index.php?module=config-menu_suite&action=style");
+		admin_redirect("index.php?module=".MODULE."&action=style");
 	}
 	$theme = $db->fetch_array($query);
 
-	$page->add_breadcrumb_item($lang->ms_edit_style.": ".$theme['title'], "index.php?module=config-menu_suite&action=style_edit&id={$id}");
+	$page->add_breadcrumb_item($lang->ms_edit_style.": ".$theme['title'], "index.php?module=".MODULE."&action=style_edit&id={$id}");
 	$page->output_header($lang->ms_edit_style);
 	generate_tabs("styles");
 
@@ -258,7 +263,7 @@ if($mybb->input['action'] == "style_edit") {
 		$style = trim($theme['ms_style']);
 	}
 
-	$form = new Form("index.php?module=config-menu_suite&amp;action=style_do_edit", "post");
+	$form = new Form("index.php?module=".MODULE."&amp;action=style_do_edit", "post");
 	$form_container = new FormContainer($lang->ms_edit_style);
 
 	$add_style = $form->generate_text_box("style", $style);
@@ -289,7 +294,7 @@ if($mybb->input['action'] == "style") {
 		{
 			$table->construct_cell("<a href=\"index.php?module=style-templates&amp;sid={$theme['sid']}\">{$theme['title']}</a>");
 			$table->construct_cell(htmlentities($theme['ms_style']));
-			$table->construct_cell("<a href=\"index.php?module=config-menu_suite&amp;action=style_edit&amp;id={$theme['sid']}\">{$lang->edit}</a>", array('class' => 'align_center', 'width' => '10%'));
+			$table->construct_cell("<a href=\"index.php?module=".MODULE."&amp;action=style_edit&amp;id={$theme['sid']}\">{$lang->edit}</a>", array('class' => 'align_center', 'width' => '10%'));
 			$table->construct_row();
 		}
 	} else {
@@ -302,7 +307,7 @@ if($mybb->input['action'] == "do_add") {
 	if(!verify_post_check($mybb->input['my_post_key']))
 	{
 		flash_message($lang->invalid_post_verify_key2, 'error');
-		admin_redirect("index.php?module=config-menu_suite&action=add");
+		admin_redirect("index.php?module=".MODULE."&action=add");
 	}
 
 	if(!strlen(trim($mybb->input['name'])))
@@ -323,13 +328,13 @@ if($mybb->input['action'] == "do_add") {
 		$db->insert_query("ms_menu", $insert);
 
 		flash_message($lang->add_success, 'success');
-		admin_redirect("index.php?module=config-menu_suite");
+		admin_redirect("index.php?module=".MODULE);
 	} else {
 		$mybb->input['action'] = "add";
 	}
 }
 if($mybb->input['action'] == "add") {
-	$page->add_breadcrumb_item($lang->ms_add, "index.php?module=config-menu_suite&action=add");
+	$page->add_breadcrumb_item($lang->ms_add, "index.php?module=".MODULE."&action=add");
 	$page->output_header($lang->ms_add);
 	generate_tabs("toplinks");
 
@@ -350,7 +355,7 @@ if($mybb->input['action'] == "add") {
 		$gid = array();
 	}
 
-	$form = new Form("index.php?module=config-menu_suite&amp;action=do_add", "post");
+	$form = new Form("index.php?module=".MODULE."&amp;action=do_add", "post");
 	$form_container = new FormContainer($lang->ms_add);
 
 	$add_name = $form->generate_text_box("name", $name);
@@ -386,33 +391,33 @@ if($mybb->input['action']=="delete") {
 	if(!strlen(trim($mybb->input['id'])))
 	{
 		flash_message($lang->menu_suite_no_id, 'error');
-		admin_redirect("index.php?module=config-menu_suite");
+		admin_redirect("index.php?module=".MODULE);
 	}
 	$id=(int)$mybb->input['id'];
 
 	if($mybb->input['no'])
-		admin_redirect("index.php?module=config-menu_suite");
+		admin_redirect("index.php?module=".MODULE);
 	else {
 		if($mybb->request_method == "post") {
 			$db->delete_query("ms_menu", "id='{$id}'");
 			flash_message($lang->ms_deleted, 'success');
-			admin_redirect("index.php?module=config-menu_suite");
+			admin_redirect("index.php?module=".MODULE);
 		} else
-			$page->output_confirm_action("index.php?module=config-menu_suite&action=delete&id={$id}", $lang->ms_delete_confirm);
+			$page->output_confirm_action("index.php?module=".MODULE."&action=delete&id={$id}", $lang->ms_delete_confirm);
 	}
 }
 if($mybb->input['action'] == "do_edit") {
 	if(!strlen(trim($mybb->input['id'])))
 	{
 		flash_message($lang->menu_suite_no_id, 'error');
-		admin_redirect("index.php?module=config-menu_suite");
+		admin_redirect("index.php?module=".MODULE);
 	}
 	$id=(int)$mybb->input['id'];
 
     if(!verify_post_check($mybb->input['my_post_key']))
 	{
 		flash_message($lang->invalid_post_verify_key2, 'error');
-		admin_redirect("index.php?module=config-menu_suite");
+		admin_redirect("index.php?module=".MODULE);
 	}
 
 	if(!strlen(trim($mybb->input['name'])))
@@ -433,7 +438,7 @@ if($mybb->input['action'] == "do_edit") {
 		$db->update_query("ms_menu", $update, "id={$id}");
 
 		flash_message($lang->edit_success, 'success');
-		admin_redirect("index.php?module=config-menu_suite");
+		admin_redirect("index.php?module=".MODULE);
 	} else {
 		$mybb->input['action'] = "edit";
 	}
@@ -442,18 +447,18 @@ if($mybb->input['action'] == "edit") {
 	if(!strlen(trim($mybb->input['id'])))
 	{
 		flash_message($lang->menu_suite_no_id, 'error');
-		admin_redirect("index.php?module=config-menu_suite");
+		admin_redirect("index.php?module=".MODULE);
 	}
 	$id=(int)$mybb->input['id'];
 	$query = $db->simple_select("ms_menu", "*", "id='{$id}'");
 	if($db->num_rows($query) != 1)
 	{
 		flash_message($lang->menu_suite_wrong_id, 'error');
-		admin_redirect("index.php?module=config-menu_suite");
+		admin_redirect("index.php?module=".MODULE);
 	}
 	$point = $db->fetch_array($query);
 
-	$page->add_breadcrumb_item($lang->ms_edit, "index.php?module=config-menu_suite&action=edit&id={$id}");
+	$page->add_breadcrumb_item($lang->ms_edit, "index.php?module=".MODULE."&action=edit&id={$id}");
 	$page->output_header($lang->ms_edit);
 	generate_tabs("toplinks");
 
@@ -474,7 +479,7 @@ if($mybb->input['action'] == "edit") {
 		$gid = explode(",", $point['gids']);
 	}
 
-	$form = new Form("index.php?module=config-menu_suite&amp;action=do_edit", "post");
+	$form = new Form("index.php?module=".MODULE."&amp;action=do_edit", "post");
 	$form_container = new FormContainer($lang->ms_edit);
 
 	$add_name = $form->generate_text_box("name", $name);
@@ -514,14 +519,14 @@ if($mybb->input['action'] == "order") {
 	}
 
 	flash_message($lang->ms_order_new, 'success');
-	admin_redirect("index.php?module=config-menu_suite");
+	admin_redirect("index.php?module=".MODULE);
 }
 if($mybb->input['action'] == "") {
 	$page->output_header($lang->menu_suite);
 	generate_tabs("toplinks");
 
-	$form = new Form("index.php?module=config-menu_suite&amp;action=order", "post");
-	$form_container = new FormContainer($lang->menu_suite."<span style=\"float: right;\"><a href=\"index.php?module=config-menu_suite&amp;action=add\">{$lang->ms_add}</a></span>");
+	$form = new Form("index.php?module=".MODULE."&amp;action=order", "post");
+	$form_container = new FormContainer($lang->menu_suite."<span style=\"float: right;\"><a href=\"index.php?module=".MODULE."&amp;action=add\">{$lang->ms_add}</a></span>");
 
 	$form_container->output_row_header($lang->ms_title);
 	$form_container->output_row_header($lang->ms_url);
@@ -536,8 +541,8 @@ if($mybb->input['action'] == "") {
 			$form_container->output_cell($link['name']);
 			$form_container->output_cell($link['link']);
 			$form_container->output_cell("<input type=\"text\" name=\"disporder[".$link['id']."]\" value=\"".$link['sort']."\" class=\"text_input align_center\" style=\"width: 80%; font-weight: bold;\" />", array('width' => '5%'));
-			$form_container->output_cell("<a href=\"index.php?module=config-menu_suite&amp;action=edit&amp;id={$link['id']}\">{$lang->edit}</a>", array('class' => 'align_center', 'width' => '10%'));
-			$form_container->output_cell("<a href=\"index.php?module=config-menu_suite&amp;action=delete&amp;id={$link['id']}\">{$lang->delete}</a>", array('class' => 'align_center', 'width' => '10%'));
+			$form_container->output_cell("<a href=\"index.php?module=".MODULE."&amp;action=edit&amp;id={$link['id']}\">{$lang->edit}</a>", array('class' => 'align_center', 'width' => '10%'));
+			$form_container->output_cell("<a href=\"index.php?module=".MODULE."&amp;action=delete&amp;id={$link['id']}\">{$lang->delete}</a>", array('class' => 'align_center', 'width' => '10%'));
 			$form_container->construct_row();
 		}
 	} else {
@@ -560,17 +565,17 @@ function generate_tabs($selected)
 	$sub_tabs = array();
 	$sub_tabs['toplinks'] = array(
 		'title' => $lang->ms_toplinks,
-		'link' => "index.php?module=config-menu_suite",
+		'link' => "index.php?module=".MODULE,
 		'description' => $lang->ms_toplinks_desc
 	);
 	$sub_tabs['styles'] = array(
 		'title' => $lang->ms_styles,
-		'link' => "index.php?module=config-menu_suite&amp;action=style",
+		'link' => "index.php?module=".MODULE."&amp;action=style",
 		'description' => $lang->ms_styles_desc
 	);
 	$sub_tabs['acp'] = array(
 		'title' => $lang->ms_acp,
-		'link' => "index.php?module=config-menu_suite&amp;action=acp",
+		'link' => "index.php?module=".MODULE."&amp;action=acp",
 		'description' => $lang->ms_acp_desc
 	);
 

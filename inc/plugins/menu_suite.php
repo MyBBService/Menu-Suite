@@ -3,10 +3,19 @@ if(!defined("IN_MYBB")) {
 	die("Direct initialization of this file is not allowed.<br /><br />Please make sure IN_MYBB is defined.");
 }
 
+global $cache;
+if(!isset($pluginlist))
+    $pluginlist = $cache->read("plugins");
+
 //ACP Hooks
-$plugins->add_hook("admin_config_menu", "menu_suite_admin_config_menu");
-$plugins->add_hook("admin_config_action_handler", "menu_suite_admin_config_action_handler");
-$plugins->add_hook("admin_config_permissions", "menu_suite_admin_config_permissions");
+if(is_array($pluginlist['active']) && in_array("mybbservice", $pluginlist['active'])) {
+	$plugins->add_hook("mybbservice_actions", "menu_suite_mybbservice_actions");
+	$plugins->add_hook("mybbservice_permission", "menu_suite_admin_config_permissions");
+} else {
+	$plugins->add_hook("admin_config_menu", "menu_suite_admin_config_menu");
+	$plugins->add_hook("admin_config_action_handler", "menu_suite_admin_config_action_handler");
+	$plugins->add_hook("admin_config_permissions", "menu_suite_admin_config_permissions");
+}
 
 //Hook für Custom Message
 $plugins->add_hook("admin_config_plugins_activate_commit", "ms_activated");
@@ -28,9 +37,10 @@ function menu_suite_info()
 		"website"		=> "http://mybbservice.de",
 		"author"		=> "MyBBService",
 		"authorsite"	=> "http://mybbservice.de",
-		"version"		=> "1.0",
+		"version"		=> "1.0.1",
 		"guid"			=> "",
 		"compatibility" => "16*",
+		"dlcid"			=> "16"
 	);
 }
 
@@ -171,6 +181,26 @@ function menu_suite_uninstall()
 	$db->drop_table("ms_acp");
 	$db->drop_column("templatesets", "ms_style");
 	$db->drop_table("ms_menu");
+}
+
+function menu_suite_mybbservice_actions($actions)
+{
+	global $page, $lang, $info;
+	$lang->load("menu_suite");
+
+	$actions['menu_suite'] = array(
+		"active" => "menu_suite",
+		"file" => "../config/menu_suite.php"
+	);
+
+	$sub_menu = array();
+	$sub_menu['10'] = array("id" => "menu_suite", "title" => $lang->menu_suite, "link" => "index.php?module=mybbservice-menu_suite");
+	$sidebar = new SidebarItem($lang->menu_suite);
+	$sidebar->add_menu_items($sub_menu, $actions[$info]['active']);
+
+	$page->sidebar .= $sidebar->get_markup();
+
+	return $actions;
 }
 
 function menu_suite_admin_config_menu($sub_menu)
