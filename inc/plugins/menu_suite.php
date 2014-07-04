@@ -3,6 +3,8 @@ if(!defined("IN_MYBB")) {
 	die("Direct initialization of this file is not allowed.<br /><br />Please make sure IN_MYBB is defined.");
 }
 
+define(DEBUG, false);
+
 global $cache;
 if(!isset($pluginlist))
     $pluginlist = $cache->read("plugins");
@@ -37,7 +39,7 @@ function menu_suite_info()
 		"website"		=> "http://mybbservice.de",
 		"author"		=> "MyBBService",
 		"authorsite"	=> "http://mybbservice.de",
-		"version"		=> "1.0.1",
+		"version"		=> "1.0.2",
 		"guid"			=> "",
 		"compatibility" => "16*",
 		"dlcid"			=> "16"
@@ -151,6 +153,16 @@ function ms_activated() {
 		if($failed > 0) {
 			$message .= "<br />".$lang->sprintf($lang->ms_activated_failed, $failed);
 		}
+	}
+	
+	if(DEBUG) {
+		echo "<b>Debug der Aktivierung.</b><br />";
+		echo "Nachricht: ".$message."<br />";
+		echo "Debug Array: <pre>";
+		var_dump($debug);
+		echo "</pre>";
+		echo "<a href=\"index.php?module=config-plugins\">Weiter</a>";
+		exit;
 	}
 }
 
@@ -354,9 +366,22 @@ function ms_import()
 	$query = $db->simple_select("themes", "properties", "tid='{$theme_id}'");
 	$theme = unserialize($db->fetch_field($query, "properties"));
 
-	$success = fix_template($theme['templateset']);
+	$success = fix_template($theme['templateset'], array(), $debug);
 	
 	log_admin_action($theme_id);
+
+	if(DEBUG) {
+		echo "<b>Debug des Imports.</b><br />";
+		if($success)
+			echo "Erfolgreich<br />";
+		else
+			echo "Failed<br />";
+		echo "Debug Array: <pre>";
+		var_dump($debug);
+		echo "</pre>";
+		echo "<a href=\"index.php?module=style-themes&action=edit&tid={$theme_id}\">Weiter</a>";
+		exit;
+	}
 
 	if($success)
 		flash_message($lang->success_imported_theme."<br />".$lang->ms_import_success, 'success');
@@ -404,14 +429,14 @@ function fix_raw_template($template, &$debug=array()) {
 		$end = strpos($template, "</div>", $start);
 		if($start === false || $end === false) {
 			$debug['status'] = "Menu not found";
-			return array("success"=>"false");
+			return array("success" => false);
 		}
 	}
 
 	$menu = substr($template, $start, $end-$start);
 	if($menu == "") {
 		$debug['status'] = "Menu empty";
-		return array("success"=>"false");
+		return array("success" => false);
 	}
 
 	$menus = explode("\n", $menu);
@@ -443,7 +468,7 @@ function fix_raw_template($template, &$debug=array()) {
 	//echo "<pre>"; var_dump($debug['menu']); echo "</pre>"	;
 	if(empty($debug['menu'])) {
 		$debug['status'] = "Menu not fetched";
-		return array("success"=>"false");
+		return array("success" => false);
 	}
 
 	//Let's select which style we need
@@ -466,7 +491,7 @@ function fix_raw_template($template, &$debug=array()) {
 
 	if($first === false || $last === false) {
 		$debug['status'] = "Menu style not right";
-		return array("success"=>"false");
+		return array("success" => false);
 	}
 
 	$start = substr($template, 0, $first);
@@ -475,8 +500,8 @@ function fix_raw_template($template, &$debug=array()) {
 	$new_template = $start."{\$menu_suite}".$end;
 
 	$debug['template'] = $new_template;	
-
-	return array("success"=>"true", "template" => $new_template);
+	
+	return array("success" => true, "template" => $new_template);
 }
 
 function add_menu_points($sid, $menu) {
